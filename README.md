@@ -172,7 +172,7 @@ You can deploy Lucky M2 Bot on:
 ### 📺 Video Tutorial
 
 <div align="center">
-  <a href="https://youtu.be/4PQcn-qqrcE">
+  <a href="">
     <img src="https://img.shields.io/badge/Deployment%20Tutorial-YouTube-dc3545?style=for-the-badge&logo=youtube">
   </a>
 </div>
