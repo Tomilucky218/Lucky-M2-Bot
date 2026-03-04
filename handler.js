@@ -11,6 +11,10 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 
+const { loadData, saveData } = require('./utils/anticallManager');
+
+
+
 // Group metadata cache to prevent rate limiting
 const groupMetadataCache = new Map();
 const CACHE_TTL = 60000; // 1 minute cache
@@ -364,10 +368,16 @@ const hasGroupLink = (text) => {
 // System JID filter - checks if JID is from broadcast/status/newsletter
 const isSystemJid = (jid) => {
   if (!jid) return true;
-  return jid.includes('@broadcast') || 
-         jid.includes('status.broadcast') || 
-         jid.includes('@newsletter') ||
-         jid.includes('@newsletter.');
+
+  // Allow WhatsApp status
+  if (jid === 'status@broadcast') return false;
+
+  // Block other system jids
+  return (
+    jid.includes('@broadcast') ||
+    jid.includes('@newsletter') ||
+    jid.includes('@newsletter.')
+  );
 };
 
 // Main message handler
@@ -697,6 +707,8 @@ const handleMessage = async (sock, msg) => {
       }
     }
     
+    
+    
     // Check if message starts with prefix
     if (!body.startsWith(config.prefix)) return;
     
@@ -744,6 +756,12 @@ const handleMessage = async (sock, msg) => {
     // Auto-typing
     if (config.autoTyping) {
       await sock.sendPresenceUpdate('composing', from);
+    }
+    
+    
+    // Auto-recording
+    if (config.autoRecording) {
+      await sock.sendPresenceUpdate('recording', from);
     }
     
     // Execute command
@@ -1304,35 +1322,138 @@ const handleAntigroupmention = async (sock, msg, groupMetadata) => {
 
 
 // Anti-call feature initializer
+
+
+
+// ===== Anti-Call Feature =====
+
+
+
+
+
 const initializeAntiCall = (sock) => {
-  // Anti-call feature - reject and block incoming calls
-  sock.ev.on('call', async (calls) => {
-    try {
-      // Reload config to get fresh settings
-      delete require.cache[require.resolve('./config')];
-      const config = require('./config');
-      
-      if (!config.defaultGroupSettings.anticall) return;
 
-      for (const call of calls) {
-        if (call.status === 'offer') {
-          // Reject the call
-          await sock.rejectCall(call.id, call.from);
+  // 🔄 Auto Unblock Checker (Every 1 hour)
+  setInterval(async () => {
+  try {
+    const data = loadData();
+    if (!data.enabled) return;
 
-          // Block the caller
-          await sock.updateBlockStatus(call.from, 'block');
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
 
-          // Notify user
-          await sock.sendMessage(call.from, {
-            text: '🚫 Calls are not allowed. You have been blocked.'
-          });
-        }
+    let changed = false;
+
+    for (const user in data.blocked) {
+      if (now - data.blocked[user] >= DAY) {
+        await sock.updateBlockStatus(user, 'unblock');
+
+        delete data.blocked[user];
+        delete data.warnings[user];
+
+        console.log(`🔓 Auto-unblocked ${user}`);
+        changed = true;
       }
-    } catch (err) {
-      console.error('[ANTICALL ERROR]', err);
     }
-  });
+
+    if (changed) {
+      saveData(data);
+    }
+
+  } catch (err) {
+    console.error('[ANTICALL AUTO-UNBLOCK ERROR]', err);
+  }
+}, 60 * 60 * 1000);
+
+sock.ev.on('call', async (calls) => {
+  try {
+    const data = loadData();
+    if (!data.enabled) return;
+
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+
+    let changed = false;
+
+    for (const call of calls) {
+      if (call.status !== 'offer') continue;
+
+      changed = true;
+
+      const caller = call.from;
+      const isVideo = call.isVideo || false;
+
+      await sock.rejectCall(call.id, caller);
+
+      if (data.warnings[caller] && now - data.warnings[caller].lastTime >= DAY) {
+        delete data.warnings[caller];
+      }
+
+      if (!data.warnings[caller]) {
+        data.warnings[caller] = {
+          count: 0,
+          lastTime: now
+        };
+      }
+
+      data.warnings[caller].count++;
+      data.warnings[caller].lastTime = now;
+
+      const warningCount = data.warnings[caller].count;
+
+      const ownerJid = sock.user.id.split(":")[0] + "@s.whatsapp.net";
+
+      await sock.sendMessage(ownerJid, {
+        text:
+          `📞 AntiCall Triggered\n\n` +
+          `👤: ${caller}\n` +
+          `📹 Type: ${isVideo ? "Video Call" : "Voice Call"}\n` +
+          `⚠️ Count: ${warningCount}/3`
+      });
+
+      if (warningCount <= 3) {
+        await sock.sendMessage(caller, {
+          text:
+            `⚠️ Warning ${warningCount}/3\n\n` +
+            `🚫 ${isVideo ? "Video" : "Voice"} calls are not allowed.\n` +
+            `After 3 warnings you will be blocked.`
+        });
+      }
+
+      if (warningCount >= 4) {
+        await sock.sendMessage(caller, {
+  text:
+    `> ⚠️ *FINAL WARNING!*\n\n` +
+    `> 🚫 You have reached 3 warnings for making calls.\n` +
+    `> Please stop calling, or you risk being reported or blocked.`,
+  contextInfo: {
+    forwardingScore: 1,
+    isForwarded: true,
+    forwardedNewsletterMessageInfo: {
+      newsletterJid: '120363420656466131@newsletter',
+      newsletterName: '𝙇𝙐𝘾𝙆𝙔 𝙈2 𝘽𝙊𝙏 | 𝙇𝙐𝘾𝙆𝙔 𝙏𝙀𝘾𝙃 𝙃𝙐𝘽',
+      serverMessageId: -1
+    }
+  }
+});
+
+        await sock.updateBlockStatus(caller, 'block');
+
+        data.blocked[caller] = now;
+        delete data.warnings[caller];
+      }
+    }
+
+    if (changed) {
+      saveData(data);
+    }
+
+  } catch (err) {
+    console.error('[ANTICALL ERROR]', err);
+  }
+});
 };
+
 
 module.exports = {
   handleMessage,

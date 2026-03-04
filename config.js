@@ -4,11 +4,12 @@
 
 module.exports = {
     // Bot Owner Configuration
-    ownerNumber: ['256789xxxxxx','256789966218'], // Add your number without + or spaces (e.g., 256789966218)
+    ownerNumber: ['256789966218','256789966218'], // Add your number without + or spaces (e.g., 256789966218)
     ownerName: ['Lucky 218', 'Lucky M2 Bot'], // Owner names corresponding to ownerNumber array
     
     // Bot Configuration
     botName: 'Lucky M2 Bot',
+    version: '1.5.0',
     prefix: '.',
     sessionName: 'session',
     sessionID: process.env.SESSION_ID || '',
@@ -22,12 +23,16 @@ module.exports = {
     selfMode: false, // Private mode - only owner can use commands
     autoRead: false,
     autoTyping: true,
+    autoRecording: false,
     autoBio: false,
     autoSticker: false,
     autoReact: false,
-    autoReactMode: 'bot', // set bot or all via cmd
+    autoReactMode: 'all', // set bot or all via cmd
     autoDownload: false,
     
+    // Auto Reply
+    AUTO_REPLY: true,
+   
     // Group Settings Defaults
     defaultGroupSettings: {
       antilink: false,
@@ -37,7 +42,6 @@ module.exports = {
       antiall: false, // Owner only - blocks all messages from non-admins
       antiviewonce: false,
       antibot: false,
-      anticall: false, // Anti-call feature
       antigroupmention: false, // Anti-group mention feature
       antigroupmentionAction: 'delete', // 'delete', 'kick'
       welcome: false,
