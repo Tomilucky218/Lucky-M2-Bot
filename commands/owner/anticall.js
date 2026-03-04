@@ -1,57 +1,60 @@
-/**
- * Anti-Call Command - Enable or disable anti-call system
- */
+
+
+const { loadData, saveData } = require('../../utils/anticallManager');
+
+
 
 module.exports = {
   name: 'anticall',
   category: 'owner',
   ownerOnly: true,
   description: 'Enable or disable anti-call system',
-  usage: '.anticall on/off',
+  usage: '.anticall on/off/status',
 
   async execute(sock, msg, args, extra) {
+    const data = loadData();
+
     if (!args[0]) {
-      return extra.reply('Usage: .anticall on/off');
+  return sock.sendMessage(msg.key.remoteJid, {
+    text:
+      `╭═✦〔⚙️ *ᴀ.ᴄ ꜱᴇᴛᴛɪɴɢꜱ* 〕✦═╮\n│\n` +
+      `│📵 Anti-Call: ${data.enabled ? 'ON ✅' : 'OFF ❌'}\n│\n` +
+      `│ *ᴄᴏᴍᴍᴀɴᴅꜱ*\n` +
+      `│ .anticall on\n` +
+      `│ .anticall off\n` +
+      `│ .anticall status\n` +
+      `╰═❀═════════════❀═╯`,
+    contextInfo: {
+      forwardingScore: 1,
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: "120363420656466131@newsletter",
+        newsletterName: "Lucky M2 Bot",
+        serverMessageId: -1
+      }
     }
+  }, { quoted: msg });
+}
 
     const option = args[0].toLowerCase();
 
-    if (!['on', 'off'].includes(option)) {
-      return extra.reply('Usage: .anticall on/off');
-    }
-
-    const enabled = option === 'on';
-
-    // Update the default setting in config
-    const fs = require('fs');
-    const path = require('path');
-    const configPath = path.join(__dirname, '../../config.js');
-    
-    try {
-      // Read the current config file
-      let configFile = fs.readFileSync(configPath, 'utf8');
-      
-      // Update the anticall setting
-      if (enabled) {
-        configFile = configFile.replace(/anticall:\s*false/g, 'anticall: true');
-      } else {
-        configFile = configFile.replace(/anticall:\s*true/g, 'anticall: false');
-      }
-      
-      // Write the updated config file
-      fs.writeFileSync(configPath, configFile);
-      
-      // Clear the config cache so the next require gets the updated version
-      delete require.cache[require.resolve('../../config')];
-      
-      await extra.reply(
-        enabled
-          ? '✅ Anti-call enabled. Calls will be auto-rejected & blocked.'
-          : '❌ Anti-call disabled.'
+    if (option === 'status') {
+      return extra.reply(
+        `⚙️ Anti-Call Status: ${data.enabled ? '✅ ON' : '❌ OFF'}`
       );
-    } catch (err) {
-      console.error('[anticall cmd] error:', err);
-      extra.reply('❌ Error updating anti-call setting.');
     }
+
+    if (!['on', 'off'].includes(option)) {
+      return extra.reply('Usage: .anticall on/off/status');
+    }
+
+    data.enabled = option === 'on';
+    saveData(data);
+
+    return extra.reply(
+      data.enabled
+        ? '✅ Anti-call enabled. Caller will be warned 3 times before blocking.'
+        : '❌ Anti-call disabled.'
+    );
   }
 };

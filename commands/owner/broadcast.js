@@ -27,7 +27,7 @@ module.exports = {
         for (const group of groups) {
           try {
             await sock.sendMessage(group.id, {
-              text: `📢 *BROADCAST MESSAGE*\n\n${message}\n\n_This is a broadcast message from bot owner_`
+              text: `📢 *BROADCAST MESSAGE*\n\n${message}\n> _This is a broadcast message from bot owner_`
             });
             success++;
           } catch (e) {
