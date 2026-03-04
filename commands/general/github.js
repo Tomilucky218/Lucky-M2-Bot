@@ -18,7 +18,7 @@ module.exports = {
             const chatId = extra.from;
             
             // GitHub repository URL
-            const repoUrl = 'https://github.com/Tomilucky218/Lucky-M2-Bot;
+            const repoUrl = 'https://github.com/Tomilucky218/Lucky-M2-Bot';
             const apiUrl = 'https://api.github.com/repos/Tomilucky218/Lucky-M2-Bot';
             
             // Send loading message
@@ -28,7 +28,7 @@ module.exports = {
                 // Fetch repository data from GitHub API
                 const response = await axios.get(apiUrl, {
                     headers: {
-                        'User-Agent': 'Lucky-M2-Bot'
+                        'User-Agent': 'KnightBot-Mini'
                     }
                 });
                 

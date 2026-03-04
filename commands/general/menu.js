@@ -33,6 +33,7 @@ module.exports = {
       let menuText = `*╭━═✦〔 ${config.botName} 〕✦═━╮*\n`;
       menuText += `*│👋 ʜᴇʟʟᴏ* @${extra.sender.split('@')[0]}!\n`;
       menuText += `*│⚡ ᴘʀᴇꜰɪx:* [${config.prefix}]\n`;
+      menuText += `*│🧬 ᴠᴇʀꜱɪᴏɴ:* ${config.version}\n`;
       menuText += `*│📦 ᴛᴏᴛᴀʟ ᴄᴏᴍᴍᴀɴᴅꜱ:* ${commands.size}\n`;
       menuText += `*│👤 ᴏᴡɴᴇʀ:* ${displayOwner}\n`;
       menuText += `*│👑 ᴅᴇᴠ     : ʟᴜᴄᴋʏ ➋➊➑*\n`;
@@ -152,7 +153,6 @@ module.exports = {
       
    
       menuText += `💡 ᴛʏᴘᴇ *${config.prefix}ʜᴇʟᴘ* <ᴄᴏᴍᴍᴀɴᴅ> ꜰᴏʀ ᴍᴏʀᴇ ɪɴꜰᴏ\n`;
-      menuText += `🌟 ʙᴏᴛ ᴠᴇʀꜱɪᴏɴ: 1.0.0\n`;
       
       // Send menu with image
       const fs = require('fs');

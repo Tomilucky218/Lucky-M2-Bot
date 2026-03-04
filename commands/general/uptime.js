@@ -52,7 +52,7 @@ module.exports = {
       
 // Get bot info
 const botName = config.botName || 'Bot';
-const botVersion = 'V1.0.1';
+const botVersion = config.version || 'V1.0.1';
  const contextInfo = {
   forwardingScore: 1,
   isForwarded: true,
